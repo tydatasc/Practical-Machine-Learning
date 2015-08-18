@@ -1,0 +1,95 @@
+---
+title: 'Practical Machine Learning -  Course Project: Writeup'
+author: "Lim Tee Yong"
+date: "18 August 2015"
+output: html_document
+---
+
+####Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, our goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <http://groupware.les.inf.puc-rio.br/har> (see the section on the Weight Lifting Exercise Dataset). 
+
+####Cleaning of data
+We wil now load the raw data given to understand them.
+
+```{r}
+data <- read.csv("pml-training.csv", header=TRUE)
+str(data)
+```
+
+From the structure, we understand there are 19622 rows and 160 columns and also lot of "NA" and some with "#DIV/0!". So, we can reload the data to clean up the "NA".
+
+```{r}
+data <- read.csv("pml-training.csv", header=TRUE, na.strings=c("NA", "#DIV/0!"))
+```
+
+After clean up the "NA", we are now able to remove columns with all "NA". But due to the huge numbers of columns, it may not help in building a good model and at the same time take up times and resources. Therefore, we decide to drop any coloumns with more that 95% null value.
+
+```{r}
+noNAdata <- data[, colSums(is.na(data)) < nrow(data) * 0.95]
+dim(noNAdata)
+```
+
+By removing the null value columns, we are now down to 60 columns.
+
+To reduce the columns further and base on what we need to predict, the name of participants and date/time in the 1st seven columns are not necessary, so they can be remove it. 
+
+```{r}
+finaldata <- noNAdata[,-(1:7)]
+dim(finaldata)
+```
+
+Now with a better data set, we can move on to prepare the data for modeling. We will partition the data into 2 with 60% for training the model and remaining for testing.
+
+```{r, echo=FALSE, message=F, warning=F}
+library(caret)
+library(randomForest)
+```
+
+
+```{r}
+set.seed(4321) #there are randomness in createPartiaion, this helps make our answers consistent
+inTrain <- createDataPartition(y=finaldata$classe, p=0.6, list=FALSE)
+training <- finaldata[inTrain,]
+testing <- finaldata[-inTrain,]
+```
+
+####Modeling
+The response vector for this prediction is a factor with 5 levels in "A", "B", "C", "D" and "E". Based on the response vector, using any classification model will be work. In Searching for a model (see <http://topepo.github.io/caret/modelList.html>) and after some consideration. We will adopt Random Forest and for the reason as below:
+
+Random Forests, which add an additional layer of randomness to bagging. In addition to constructing each tree using a different bootstrap sample of the data, Random Forests change how the classification or regression trees are         constructed. In standard trees, each node is split using the best split among all variables. In a Random Forest,       each node is split using the best among a subset of predictors randomly chosen at that node. This somewhat             counterintuitive strategy turns out to perform very well compared to many other classifiers, including discriminant    analysis, support vector machines and neural networks, and is robust against overfitting. In addition, it is very
+user-friendly in the sense that it has only two parameters (the number of variables in the random subset at each
+node and the number of trees in the forest), and is usually not very sensitive to their values.
+
+####Training of model
+Since, the training of the model take awhile, I will load from the previous run. The code for training is as below but commented out.
+
+```{r}
+##modFit <- train(classe~., method="rf", data=training, prox=TRUE, importance = TRUE)
+modFit <- readRDS("rfmodel.Rds")
+```
+
+Let's look at the details of the model.
+
+```{r}
+modFit
+```
+
+The final model have a very high accuracy of 98%. With such accuracy, we will go ahead and predict the testing data set and run a confusion Matrix to understand the outcome.
+
+```{r}
+pred <- predict(modFit, testing)
+confusionMatrix(pred, testing$classe)
+```
+
+The outcome is very good with an accuracy of 99%. Also, the Sensitivity(true-positive rate) are greater than 98% across and with Specificity(false-positive rate(1 - Specificity)) almost 0. With such result, there isn't any tuning needed for the model. Hence, we go ahead to predict the 20 cases given.
+
+```{r}
+testdata <- read.csv("pml-testing.csv", header=TRUE)
+predictions <- predict(modFit, newdata = testdata)
+predictions
+```
+
+####Conclusion
+After submitting the outcome on the 20 cases, we are able to get a 20 out of 20 correct predictions.
+
+
