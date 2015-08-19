@@ -54,7 +54,7 @@ testing <- finaldata[-inTrain,]
 ```
 
 ####Modeling
-The response vector for this prediction is a factor with 5 levels in "A", "B", "C", "D" and "E". Based on the response vector, using any classification model will be work. In Searching for a model (see <http://topepo.github.io/caret/modelList.html>) and after some consideration. We will adopt Random Forest and for the reason as below:
+The response vector for this prediction is a factor with 5 levels in "A", "B", "C", "D" and "E". Based on the response vector, using any classification model will work. In Searching for a model (see <http://topepo.github.io/caret/modelList.html>) and after some consideration. We will adopt Random Forest and for the reason as below:
 
 Random Forests, which add an additional layer of randomness to bagging. In addition to constructing each tree using a different bootstrap sample of the data, Random Forests change how the classification or regression trees are         constructed. In standard trees, each node is split using the best split among all variables. In a Random Forest,       each node is split using the best among a subset of predictors randomly chosen at that node. This somewhat             counterintuitive strategy turns out to perform very well compared to many other classifiers, including discriminant    analysis, support vector machines and neural networks, and is robust against overfitting. In addition, it is very
 user-friendly in the sense that it has only two parameters (the number of variables in the random subset at each
